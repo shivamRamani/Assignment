@@ -13,18 +13,14 @@ export const getAllposts = async (req,res)=>{
 
 export const createPost = async (req,res)=>{
     const creatorId=req.userId;
-    console.log(req.userId);
     const postData=new Post({...req.body,creatorId});
-    // console.log('requested',postData);
 
     try{
         let postId;
         await postData.save().then((result)=>{
-            console.log(result);
             postId=result._id;
         });
         const userData= await User.findByIdAndUpdate(req.userId,{"$push": { "userPosts": postId }},{new: true});
-        console.log(userData);
         res.status(201).json(postData);
     }
     catch(error){
@@ -39,7 +35,6 @@ export const updatePost = async (req,res)=>{
 
     const _id =req.params.id;
     const postData = req.body;
-    console.log(_id,postData);
     try {
         const updatedPost= await Post.findByIdAndUpdate({_id},{...postData},{new:true});
         if(!updatedPost){
@@ -59,7 +54,6 @@ export const deletePost = async (req,res)=>{
     console.log("requested delete");
 
     const _id = req.params.id;
-    console.log(req.userId);
 
     try {
         

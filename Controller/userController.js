@@ -73,7 +73,6 @@ export const verifyotp = async (req,res) =>{
         if(valid){
 
             const verifiedUserData=await User.findByIdAndUpdate(userId,{verified: true},{new:true});
-            console.log(verifiedUserData);
             await OtpVerifiaction.deleteMany({userId});
             res.status(200).json({
                 message: "user verified", 
@@ -127,7 +126,6 @@ export const signUp = async (req,res) =>{
         const existingUser= await User.findOne({emailId: email});
 
         if(existingUser) {
-            console.log("this is a user ",existingUser);
             return res.status(400).json({massage: "User already exist"});
         }
 
