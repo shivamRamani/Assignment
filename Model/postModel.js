@@ -4,7 +4,6 @@ const postschema=mongoose.Schema({
 
     creatorName: {
         type: String,
-        unique: true,
     },
     postData: String,
     creatorId: String,

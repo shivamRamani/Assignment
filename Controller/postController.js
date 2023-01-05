@@ -1,5 +1,6 @@
 
 import { Post } from "../Model/postModel.js"
+import { User } from "../Model/userModel.js";
 
 export const getAllposts = async (req,res)=>{
     try{
@@ -11,15 +12,23 @@ export const getAllposts = async (req,res)=>{
 }
 
 export const createPost = async (req,res)=>{
-    const creatorId=req.userId||'me';
+    const creatorId=req.userId;
+    console.log(req.userId);
     const postData=new Post({...req.body,creatorId});
-    console.log('requested',postData);
+    // console.log('requested',postData);
 
     try{
-        await postData.save();
+        let postId;
+        await postData.save().then((result)=>{
+            console.log(result);
+            postId=result._id;
+        });
+        const userData= await User.findByIdAndUpdate(req.userId,{"$push": { "userPosts": postId }},{new: true});
+        console.log(userData);
         res.status(201).json(postData);
     }
     catch(error){
+        console.log(error);
         res.status(500).json({error: error.massage});
     }
     
@@ -33,8 +42,6 @@ export const updatePost = async (req,res)=>{
     console.log(_id,postData);
     try {
         const updatedPost= await Post.findByIdAndUpdate({_id},{...postData},{new:true});
-        console.log(updatePost);
-
         if(!updatedPost){
             res.status(404).json('No Post Found');
         }
@@ -42,9 +49,8 @@ export const updatePost = async (req,res)=>{
             res.status(200).json(updatedPost);
         }
     } catch (error) {
-        // handle error masssage
         console.log(error);
-        res.status(409).json(error.massage);
+        res.status(409).json(error);
     }
     
 }
@@ -53,10 +59,17 @@ export const deletePost = async (req,res)=>{
     console.log("requested delete");
 
     const _id = req.params.id;
+    console.log(req.userId);
 
     try {
         
         const deletedPost = await Post.findByIdAndDelete({_id},{new:true});
+        await User.findByIdAndUpdate(req.userId, {
+            $pullAll: {
+                userPosts: [_id],
+            },
+        });
+
         if(!deletedPost){
             res.status(404).json('No Post Found');
         }
@@ -64,6 +77,7 @@ export const deletePost = async (req,res)=>{
             res.status(200).json(deletedPost);
         }
     } catch (error) {
+        console.log(error);
         res.status(408).json(error.massage);
     }
     
