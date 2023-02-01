@@ -15,10 +15,6 @@ const userschema=mongoose.Schema({
         type: String,
         required: true,
     },
-    userPosts: {
-        type: [String],
-        default: []
-    },
     verified: {
         type: Boolean,
         default: false

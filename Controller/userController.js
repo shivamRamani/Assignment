@@ -6,6 +6,7 @@ import { OtpVerifiaction } from "../Model/userOtpVerification.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import mongoose from "mongoose";
 import userRouter from "../Routes/userRoute.js";
 
 const sendVerificationMail = async (_id,email,res)=>{
@@ -161,6 +162,49 @@ let transport = nodemailer.createTransport({
         },
         secure: true,
  });
+
+
+export const getUser = async (req,res) =>{
+    console.log('hiii');
+    try {
+
+        const userData = await User.aggregate([
+
+            {
+                $project: {
+                    _id: {
+                        "$toString": "$_id"
+                    },
+                    userName: 1,
+                    email: 1,
+                    verified: 1
+                }
+              },
+              {
+				  $lookup: {
+                  from: "posts",
+                  localField: "_id",
+                  foreignField: "creatorId",
+                  as: "userPosts",
+                  pipeline: [
+                      {
+                      	  $project: {
+                          _id: 0,
+                          creatorName: 1,
+                          postData: 1
+                          }
+                      }
+                  ]
+                  }
+              }
+        ]);
+        res.status(200).json(userData);
+
+        
+    } catch (error) {
+        res.status(409).json(error.massage);
+    }
+}
 
 
  

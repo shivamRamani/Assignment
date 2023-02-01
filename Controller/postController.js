@@ -20,7 +20,6 @@ export const createPost = async (req,res)=>{
         await postData.save().then((result)=>{
             postId=result._id;
         });
-        const userData= await User.findByIdAndUpdate(req.userId,{"$push": { "userPosts": postId }},{new: true});
         res.status(201).json(postData);
     }
     catch(error){
@@ -58,11 +57,6 @@ export const deletePost = async (req,res)=>{
     try {
         
         const deletedPost = await Post.findByIdAndDelete({_id},{new:true});
-        await User.findByIdAndUpdate(req.userId, {
-            $pullAll: {
-                userPosts: [_id],
-            },
-        });
 
         if(!deletedPost){
             res.status(404).json('No Post Found');
