@@ -57,7 +57,11 @@ export const verifyotp = async (req,res) =>{
         if(!userId||!otp){
             throw new Error("not found");
         }
-        const userOtpData=await OtpVerifiaction.findOne({userId: userId});
+        const userOtpData=await OtpVerifiaction.aggregate([
+            {
+                $match : { userId: userId}
+            }
+        ]);
         if(!userOtpData){
             throw new Error("not found");
         }
@@ -100,7 +104,11 @@ export const signIn = async (req,res) =>{
 
     const {email,password} = req.body;
     try {
-        const currentUser= await User.findOne({emailId: email});
+        const currentUser= await User.aggregate([
+            {
+                $match : {emailId: email}
+            }
+        ]);
         
         if(!currentUser) {
             return res.status(404).json({massage: "User doesn't exist"});
@@ -124,7 +132,11 @@ export const signUp = async (req,res) =>{
     const {userName,email,password,confirmPassword} =req.body; 
     try{
 
-        const existingUser= await User.findOne({emailId: email});
+        const existingUser= await User.aggregate([
+            {
+                $match : {emailId: email}
+            }
+        ]);
 
         if(existingUser) {
             return res.status(400).json({massage: "User already exist"});
@@ -165,7 +177,7 @@ let transport = nodemailer.createTransport({
 
 
 export const getUser = async (req,res) =>{
-    console.log('hiii');
+
     try {
 
         const userData = await User.aggregate([
