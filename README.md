@@ -15,6 +15,27 @@ api route: https://assignment-ti7v.onrender.com
 | :-------- | :------- | :------------------------- |
 |           |          | Gives back app post in database |
 
+#### Get User 
+
+```http
+  Get https://assignment-ti7v.onrender.com/user
+```
+
+Response
+```json
+{
+    {
+        "_id": "UserId",
+        "userName": "Name",
+        "verified": true,
+        "userPosts": [... user's posts]
+    },
+    {
+    }
+    .....
+}
+
+```
 #### Create Post 
 
 ```http
