@@ -201,7 +201,7 @@ export const getUser = async (req,res) =>{
                   pipeline: [
                       {
                       	  $project: {
-                          _id: 0,
+                          _id: 1,
                           creatorName: 1,
                           postData: 1
                           }
