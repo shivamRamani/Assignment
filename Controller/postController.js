@@ -1,5 +1,4 @@
 
-import { Post } from "../Model/postModel.js";
 import mongoose from "mongoose";
 import { postSchema } from "../Utils/validationSchema.js"
 import postServices from "../Services/postServices.js";
@@ -19,8 +18,7 @@ export const createPost = async (req,res)=>{
 
     try{
         const result = await postSchema.validateAsync({...req.body,creatorId});
-        const postData=new Post(result);
-        await postData.save();
+        const postData= await postServices.createPost(result);
         
         res.status(201).json(postData);
     }

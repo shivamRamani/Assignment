@@ -19,7 +19,7 @@ let transport = nodemailer.createTransport({
         secure: true,
  });
 
-const sendVerificationMail = async (_id,email,res)=>{
+export const sendVerificationMail = async (_id,email,res)=>{
     try{
         const otp=`${Math.floor(1000+Math.random()*9000)}`;
         const mailOptions = {
@@ -29,14 +29,16 @@ const sendVerificationMail = async (_id,email,res)=>{
             text: `Your verification OTP is ${otp}.It will expire in one hour!`,
         };
         const hashedotp= await bcrypt.hash(otp,10);
-        const newOtpVerification= new OtpVerifiaction({
+
+        const otpData={
             userId: _id,
             otp: hashedotp,
             createdTime: Date.now(),
             expireTime: Date.now()+3600000,
-        });
+        };
+
+        await userServices.saveOtp(otpData);
         
-        await newOtpVerification.save();
         transport.sendMail(mailOptions, function(err, info) {
             if (err) {
               console.log(err);
@@ -137,7 +139,6 @@ export const signUp = async (req,res) =>{
         
         const result= await userSchema.validateAsync(req.body,{abortEarly: false});
         const {userName,emailId,password,confirmPassword} = result; 
-        console.log(result);
         const existingUser= await userServices.findUser(emailId);
         
         if(existingUser) {
@@ -145,15 +146,10 @@ export const signUp = async (req,res) =>{
         }
 
         const hashedPassword = await bcrypt.hash(password,10);
-        const newUser= new User({userName,emailId: emailId,password: hashedPassword});
-        let verificationData;
-
-        await newUser.save().then(async (result)=>{
-            verificationData = await sendVerificationMail(result._id,emailId,res);
-        });
-        console.log(verificationData);
-
-        const token = jwt.sign({email: newUser.emailId, id: newUser._id},process.env.SECRET_KEY,{expiresIn: "2h"});
+        const userData={userName,emailId: emailId,password: hashedPassword};
+        let verificationData= await userServices.createUser(userData);
+        
+        const token = jwt.sign({email: userData.emailId, id: userData._id},process.env.SECRET_KEY,{expiresIn: "2h"});
 
         res.status(200).json({...verificationData,token});
 

@@ -38,5 +38,15 @@ const deletePost = async (postId) =>{
     }
 }
 
+const createPost = async (postData) =>{
+    try {
+        const result= new Post(postData);
+        await result.save();
+        return result;
+    } catch (error) {
+        throw error
+    }
+}
 
-export default {getPosts,updatePost,deletePost}
+
+export default {getPosts,updatePost,deletePost,createPost}

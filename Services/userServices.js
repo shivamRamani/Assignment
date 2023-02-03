@@ -1,6 +1,6 @@
 import { User } from "../Model/userModel.js";
 import { OtpVerifiaction } from "../Model/userOtpVerification.js";
-
+import { sendVerificationMail } from "../Controller/userController.js";
 const getUsers = async () =>{
 
     try {
@@ -59,6 +59,15 @@ const getOtpVerificationData = async (userId) =>{
     }
 }
 
+const saveOtp = async (otpData) =>{
+    try {
+        const newOtpVerification= new OtpVerifiaction(otpData);
+        await newOtpVerification.save();
+    } catch (error) {
+        throw error;
+    }
+}
+
 const deleteOtpVerificationData = async (userId) => {
     try{
         await OtpVerifiaction.deleteMany({userId});
@@ -89,6 +98,19 @@ const findUser = async (emailId) => {
     }
 }
 
+const createUser = async (userData) => {
+    try {
+        
+        const newUser= new User(userData);
+        let verificationData;
+        await newUser.save().then(async (result)=>{
+            verificationData = await sendVerificationMail(result._id,result.emailId);
+        });
+        return verificationData;    
 
+    } catch (error) {
+        throw error;
+    }
+}
 
-export default { getUsers,findUser,getOtpVerificationData,deleteOtpVerificationData,updateVerifiedUserData };
+export default { getUsers,findUser,getOtpVerificationData,deleteOtpVerificationData,updateVerifiedUserData,createUser,saveOtp};
