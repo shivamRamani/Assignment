@@ -15,6 +15,9 @@ const userschema=mongoose.Schema({
         type: String,
         required: true,
     },
+    confirmPassword: {
+        type :String,
+    },
     verified: {
         type: Boolean,
         default: false
