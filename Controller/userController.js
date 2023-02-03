@@ -6,10 +6,20 @@ import { OtpVerifiaction } from "../Model/userOtpVerification.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import mongoose from "mongoose";
-import userRouter from "../Routes/userRoute.js";
+import { userSchema } from "../Utils/validationSchema.js"
+import userServices from "../Services/userServices.js";
 
-const sendVerificationMail = async (_id,email,res)=>{
+let transport = nodemailer.createTransport({
+    port: 465,
+        host: "smtp.gmail.com",
+        auth: {
+          user: process.env.SENDER_EMAIL,
+          pass: process.env.PASSWORD, 
+        },
+        secure: true,
+ });
+
+export const sendVerificationMail = async (_id,email,res)=>{
     try{
         const otp=`${Math.floor(1000+Math.random()*9000)}`;
         const mailOptions = {
@@ -19,14 +29,16 @@ const sendVerificationMail = async (_id,email,res)=>{
             text: `Your verification OTP is ${otp}.It will expire in one hour!`,
         };
         const hashedotp= await bcrypt.hash(otp,10);
-        const newOtpVerification= new OtpVerifiaction({
+
+        const otpData={
             userId: _id,
             otp: hashedotp,
             createdTime: Date.now(),
             expireTime: Date.now()+3600000,
-        });
+        };
+
+        await userServices.saveOtp(otpData);
         
-        await newOtpVerification.save();
         transport.sendMail(mailOptions, function(err, info) {
             if (err) {
               console.log(err);
@@ -55,46 +67,44 @@ export const verifyotp = async (req,res) =>{
     try {
         const {userId,otp}= req.body;
         if(!userId||!otp){
-            throw new Error("not found");
-        }
-        const userOtpData=await OtpVerifiaction.aggregate([
-            {
-                $match : { userId: userId}
-            }
-        ]);
-        if(!userOtpData){
-            throw new Error("not found");
+            throw new Error("UserId and otp is required");
         }
 
+        const userOtpData=await userServices.getOtpVerificationData(userId);
+        if(!userOtpData){
+            throw new Error("User Not found");
+        }
+        
         const otpExpired=userOtpData.expireTime<Date.now();
 
         if(otpExpired){
-            await OtpVerifiaction.deleteMany({userId});
-            throw new Error("expired");
+            await userServices.deleteOtpVerificationData(userId);
+            throw new Error("otp expired");
         }
         
         const valid=await bcrypt.compare(otp,userOtpData.otp);
         
         if(valid){
 
-            const verifiedUserData=await User.findByIdAndUpdate(userId,{verified: true},{new:true});
-            await OtpVerifiaction.deleteMany({userId});
+            const verifiedUserData=await userServices.updateVerifiedUserData(userId);
+            await userServices.deleteOtpVerificationData(userId);
             res.status(200).json({
                 message: "user verified", 
                 data: {
                     id: verifiedUserData._id,
                     userName: verifiedUserData.userName,
-                    email: verifiedUserData.userName,
+                    email: verifiedUserData.emailId,
                     verified: verifiedUserData.verified
                 }
             })
         }
         else {
-            throw new Error(" not correct otp  ")
+            throw new Error(" Wrong Otp ");
         }
 
     } catch (error) {
-        res.status(404).json(error.massage);
+        console.log(error.message);
+        res.status(404).json(error.message);
     }
 
 }
@@ -102,13 +112,9 @@ export const verifyotp = async (req,res) =>{
 
 export const signIn = async (req,res) =>{
 
-    const {email,password} = req.body;
+    const {emailId,password} = req.body;
     try {
-        const currentUser= await User.aggregate([
-            {
-                $match : {emailId: email}
-            }
-        ]);
+        const currentUser= await userServices.findUser(emailId);
         
         if(!currentUser) {
             return res.status(404).json({massage: "User doesn't exist"});
@@ -117,7 +123,7 @@ export const signIn = async (req,res) =>{
         const matchPassword= await bcrypt.compare(password,currentUser.password);
         if(!matchPassword) return res.status(404).json({ massage: 'Invalid Password'});
 
-        const token = jwt.sign({email: currentUser.email, id: currentUser._id},process.env.SECRET_KEY,{expiresIn: "2h"});
+        const token = jwt.sign({email: currentUser.emailId, id: currentUser._id},process.env.SECRET_KEY,{expiresIn: "2h"});
         res.status(200).json(token);
 
     } catch (error) {
@@ -129,89 +135,42 @@ export const signIn = async (req,res) =>{
 
 export const signUp = async (req,res) =>{
     
-    const {userName,email,password,confirmPassword} =req.body; 
     try{
-
-        const existingUser= await User.aggregate([
-            {
-                $match : {emailId: email}
-            }
-        ]);
-
+        
+        const result= await userSchema.validateAsync(req.body,{abortEarly: false});
+        const {userName,emailId,password,confirmPassword} = result; 
+        const existingUser= await userServices.findUser(emailId);
+        
         if(existingUser) {
             return res.status(400).json({massage: "User already exist"});
         }
 
-        if(password!=confirmPassword) return res.status(400).json({massage: "Passwords don't match"});
-
         const hashedPassword = await bcrypt.hash(password,10);
-        const newUser= new User({userName,emailId: email,password: hashedPassword});
-        let verificationData;
-
-        await newUser.save().then(async (result)=>{
-            verificationData = await sendVerificationMail(result._id,email,res);
-        })
-
+        const userData={userName,emailId: emailId,password: hashedPassword};
+        let verificationData= await userServices.createUser(userData);
         
-
-        const token = jwt.sign({email: newUser.email, id: newUser._id},process.env.SECRET_KEY,{expiresIn: "2h"});
+        const token = jwt.sign({email: userData.emailId, id: userData._id},process.env.SECRET_KEY,{expiresIn: "2h"});
 
         res.status(200).json({...verificationData,token});
 
     }
     catch(error){
         console.log(error);
+        if(error.isJoi===true){
+            res.status(422).json(error.details);
+        }else
         res.status(409).json(error.massage);
     }
 
 }
-let transport = nodemailer.createTransport({
-    port: 465,
-        host: "smtp.gmail.com",
-        auth: {
-          user: process.env.SENDER_EMAIL,
-          pass: process.env.PASSWORD, 
-        },
-        secure: true,
- });
+
 
 
 export const getUser = async (req,res) =>{
-
     try {
 
-        const userData = await User.aggregate([
-
-            {
-                $project: {
-                    _id: {
-                        "$toString": "$_id"
-                    },
-                    userName: 1,
-                    email: 1,
-                    verified: 1
-                }
-              },
-              {
-				  $lookup: {
-                  from: "posts",
-                  localField: "_id",
-                  foreignField: "creatorId",
-                  as: "userPosts",
-                  pipeline: [
-                      {
-                      	  $project: {
-                          _id: 1,
-                          creatorName: 1,
-                          postData: 1
-                          }
-                      }
-                  ]
-                  }
-              }
-        ]);
+        const userData = await userServices.getUsers();
         res.status(200).json(userData);
-
         
     } catch (error) {
         res.status(409).json(error.massage);
