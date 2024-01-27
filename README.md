@@ -201,7 +201,7 @@ Response
 
 ```json
 {
-    "message": "Success/Failure",
+    "message": "Success/Failures",
     "data": {
         "id": "userId",
         "userName": "userName",
