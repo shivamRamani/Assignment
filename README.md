@@ -1,27 +1,29 @@
-
 # Backend End Assignment
 
 api route: https://assignment-ti7v.onrender.com
 
 ## API Reference
+
 ### Post routes
+
 #### Get all posts
 
 ```http
   GET /https://assignment-ti7v.onrender.com/posts
 ```
 
-| Parameter | Type     | Description                |
-| :-------- | :------- | :------------------------- |
-|           |          | Gives back app post in database |
+| Parameter | Type | Description                     |
+| :-------- | :--- | :------------------------------ |
+|           |      | Gives back app post in database |
 
-#### Get User 
+#### Get User
 
 ```http
   Get https://assignment-ti7v.onrender.com/user
 ```
 
 Response
+
 ```json
 {
     {
@@ -36,109 +38,108 @@ Response
 }
 
 ```
-#### Create Post 
+
+#### Create Post
 
 ```http
   POST /https://assignment-ti7v.onrender.com/posts
 ```
+
 Parameter
- 
-* jwt token in **req.headers.authorization**
-* json data in formate of
+
+-   jwt token in **req.headers.authorization**
+-   json data in formate of
 
 ```json
-
 {
     "creatorName": "userName",
     "postData": "DummyData"
 }
-
 ```
+
 Response
+
 ```json
 {
     "creatorName": "UserName",
     "postData": "DummyData",
     "creatorId": "xxxxxxxxxxxxxxx",
-    "_id": "xxxxxxxxxxxxxxxxx",
+    "_id": "xxxxxxxxxxxxxxxxx"
 }
-
 ```
 
-
-#### Update Post 
+#### Update Post
 
 ```http
   PATCH /https://assignment-ti7v.onrender.com/posts/:id
 ```
+
 Parameter
-* post id should be add in **req.params**
-* jwt token in **req.headers.authorization**
-* json data in formate of
+
+-   post id should be add in **req.params**
+-   jwt token in **req.headers.authorization**
+-   json data in formate of
 
 ```json
-
 {
     "postData": "UpdatedData"
 }
-
 ```
+
 Response
+
 ```json
 {
     "creatorName": "UserName",
     "postData": "UpdatedData",
     "creatorId": "xxxxxxxxxxxxxxx",
-    "_id": "xxxxxxxxxxxxxxxxx",
+    "_id": "xxxxxxxxxxxxxxxxx"
 }
-
 ```
 
-
-#### Delete Post 
+#### Delete Post
 
 ```http
   DELETE /https://assignment-ti7v.onrender.com/posts/:id
 ```
+
 Parameter
-* post id should be add in **req.params**
-* jwt token in **req.headers.authorization**
+
+-   post id should be add in **req.params**
+-   jwt token in **req.headers.authorization**
 
 Response(Deleted post data)
+
 ```json
 {
     "creatorName": "UserName",
     "postData": "DummyData",
     "creatorId": "xxxxxxxxxxxxxxx",
-    "_id": "xxxxxxxxxxxxxxxxx",
+    "_id": "xxxxxxxxxxxxxxxxx"
 }
-
 ```
 
 ### UserRoutes
 
-
-#### User Signup 
+#### User Signup
 
 ```http
   POST /https://assignment-ti7v.onrender.com/user/signUp
 ```
+
 Parameter
 
 ```json
-
-
 {
     "userName": "UserName",
     "email": "szqajkdjakmgzxbcgn@tmmbt.net",
     "password": "password",
     "confirmPassword": "password"
 }
-
-
 ```
 
 Response
+
 ```json
 {
     "status": "Pending", // Email Verification Status
@@ -151,24 +152,24 @@ Response
 }
 
 ```
-#### User SignIn 
+
+#### User SignIn
 
 ```http
   GEt /https://assignment-ti7v.onrender.com/user/signIn
 ```
+
 Parameter
 
 ```json
-
 {
-  "email": "szqajkdjakmgzxbcgn@tmmbt.net",
-  "password": "password",
+    "email": "szqajkdjakmgzxbcgn@tmmbt.net",
+    "password": "password"
 }
-
-
 ```
 
 Response
+
 ```json
 {
     "token": JWTTOKEN
@@ -176,11 +177,12 @@ Response
 
 ```
 
-#### OTP Verification 
+#### OTP Verification
 
 ```http
   GEt /https://assignment-ti7v.onrender.com/user/verifyotp
 ```
+
 Parameter
 
 ```json
@@ -196,9 +198,10 @@ Parameter
 ```
 
 Response
+
 ```json
 {
-    "message": "Success/Failure",
+    "message": "Success/Failures",
     "data": {
         "id": "userId",
         "userName": "userName",
